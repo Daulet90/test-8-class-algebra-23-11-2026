@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Тест: Теңдеулердің түбірлерін табу. Виет теоремасы — 8Ә</title>
+<style>
+  /* ВСТАВЬТЕ ССЫЛКУ ВЕБ-ПРИЛОЖЕНИЯ APPS SCRIPT В SCRIPT_URL (ниже, в <script>) */
+  :root{
+    --ink:#1d2430; --muted:#5b6575; --line:#d9dde3; --bg:#f6f5f1;
+    --paper:#ffffff; --accent:#1f3a5f; --accent-soft:#e8edf4;
+    --ok:#2e6b3f; --warn:#8a5a00; --bad:#9b2c2c;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:"Times New Roman", Georgia, "PT Serif", serif;
+    font-size:18px; line-height:1.55;
+    min-height:100vh; display:flex; align-items:flex-start; justify-content:center;
+    padding:32px 14px;
+  }
+  .sheet{
+    width:100%; max-width:760px; background:var(--paper);
+    border:1px solid var(--line); border-top:4px solid var(--accent);
+    padding:36px 40px 32px;
+  }
+  .ui{font-family:"Segoe UI", Arial, Helvetica, sans-serif}
+  h1{font-size:26px; margin:0 0 6px; font-weight:normal; letter-spacing:.2px}
+  h2{font-size:20px; margin:0; font-weight:normal}
+  .sub{color:var(--muted); font-size:16px; margin:0}
+  .rule{border:0; border-top:1px solid var(--line); margin:22px 0}
+  dl.meta{display:grid; grid-template-columns:170px 1fr; gap:6px 14px; margin:0; font-size:17px}
+  dl.meta dt{color:var(--muted)}
+  dl.meta dd{margin:0}
+  label.f{display:block; font-size:14px; color:var(--muted); margin:18px 0 6px}
+  input[type=text], select{
+    width:100%; padding:10px 12px; font-size:17px; border:1px solid #b9c0ca;
+    background:#fff; color:var(--ink); border-radius:2px; outline:none;
+  }
+  input[type=text]:focus, select:focus{border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-soft)}
+  .variants{display:flex; gap:12px}
+  .variants label{
+    flex:1; border:1px solid #b9c0ca; padding:10px 12px; cursor:pointer; text-align:center;
+    font-size:16px; border-radius:2px; user-select:none;
+  }
+  .variants input{display:none}
+  .variants input:checked + span{font-weight:600}
+  .variants label.on{border-color:var(--accent); background:var(--accent-soft)}
+  .rules{font-size:15px; color:var(--muted); margin:22px 0 0; padding-left:20px}
+  .rules li{margin:3px 0}
+  .btnrow{display:flex; justify-content:flex-end; margin-top:28px}
+  button.btn{
+    font-family:"Segoe UI", Arial, sans-serif; font-size:16px;
+    padding:11px 28px; border:1px solid var(--accent); background:var(--accent); color:#fff;
+    cursor:pointer; border-radius:2px;
+  }
+  button.btn:disabled{background:#c5cbd3; border-color:#c5cbd3; cursor:not-allowed}
+  button.btn:not(:disabled):hover{background:#162c49}
+
+  .qhead{display:flex; justify-content:space-between; align-items:baseline; gap:12px}
+  .qnum{font-size:15px; color:var(--muted)}
+  .timer{font-size:15px; color:var(--muted); font-variant-numeric:tabular-nums}
+  .timer b{color:var(--ink); font-weight:600}
+  .timer.low b{color:var(--bad)}
+  .bar{height:3px; background:#eceef1; margin:12px 0 26px}
+  .bar > i{display:block; height:100%; background:var(--accent); width:0}
+  .qtext{font-size:20px; margin:0 0 22px}
+  .m{font-style:italic; white-space:nowrap}
+  .opts{list-style:none; margin:0; padding:0}
+  .opts li{margin:0 0 10px}
+  .opts label{
+    display:flex; gap:12px; align-items:flex-start; padding:11px 14px;
+    border:1px solid var(--line); cursor:pointer; border-radius:2px;
+  }
+  .opts label:hover{border-color:#aab3bf}
+  .opts input{margin-top:6px; accent-color:var(--accent)}
+  .opts label.on{border-color:var(--accent); background:var(--accent-soft)}
+  .opts .lt{font-weight:600; min-width:20px}
+  .numin{max-width:260px}
+  .note{font-size:14px; color:var(--muted); margin-top:8px}
+
+  .result-score{font-size:46px; margin:10px 0 4px}
+  table.res{border-collapse:collapse; width:100%; font-size:16px; margin-top:12px}
+  table.res td{border-bottom:1px solid var(--line); padding:8px 4px}
+  table.res td:last-child{text-align:right}
+  .status{font-size:14px; margin-top:18px}
+  .status.ok{color:var(--ok)} .status.err{color:var(--bad)} .status.wait{color:var(--muted)}
+
+  .overlay{position:fixed; inset:0; background:rgba(20,26,36,.55); display:none; align-items:center; justify-content:center; padding:16px; z-index:10}
+  .overlay.show{display:flex}
+  .modal{background:#fff; max-width:480px; width:100%; border-top:4px solid var(--warn); padding:26px 28px}
+  .modal h3{margin:0 0 10px; font-weight:normal; font-size:21px; color:var(--warn)}
+  .modal p{margin:0 0 10px; font-size:17px}
+  .hidden{display:none !important}
+  .foot{margin-top:28px; font-size:13px; color:#8a929e; text-align:center}
+  @media (max-width:560px){
+    .sheet{padding:26px 20px}
+    dl.meta{grid-template-columns:1fr}
+    dl.meta dt{margin-top:6px}
+    .qtext{font-size:19px}
+  }
+</style>
+</head>
+<body>
+<main class="sheet">
+
+  <!-- ===== Бастапқы бет ===== -->
+  <section id="startScreen">
+    <p class="sub ui">Тест</p>
+    <h1>Теңдеулердің түбірлерін табу</h1>
+    <p class="sub">Оқу мақсаты: 8.2.2.4 Виет теоремасын қолдану</p>
+    <hr class="rule">
+    <dl class="meta">
+      <dt>Пән</dt><dd>Алгебра</dd>
+      <dt>Мұғалім</dt><dd>математика пәнінің мұғалімі – Кунгозин Даулет Багдашұлы</dd>
+      <dt>Сұрақтар саны</dt><dd>10 (1 тапсырма – 1 балл, барлығы 10 балл)</dd>
+      <dt>Уақыт</dt><dd>әр сұраққа 2 мин 30 с</dd>
+    </dl>
+    <hr class="rule">
+
+    <div class="ui">
+      <label class="f" for="fio">Аты-жөні (тегі, аты)</label>
+      <input type="text" id="fio" autocomplete="off" placeholder="Введите ФИ">
+
+      <label class="f" for="klass">Сынып</label>
+      <select id="klass">
+        <option value="">— сыныпты таңдаңыз —</option>
+        <option value="8Ә">8Ә</option>
+      </select>
+
+      <label class="f">Нұсқа</label>
+      <div class="variants">
+        <label><input type="radio" name="variant" value="1"><span>1-нұсқа</span></label>
+        <label><input type="radio" name="variant" value="2"><span>2-нұсқа</span></label>
+      </div>
+
+      <ul class="rules">
+        <li>Әр бетте бір сұрақ. Келесі сұраққа өткен соң алдыңғыға қайту мүмкін емес.</li>
+        <li>Уақыт біткенде келесі сұрақ автоматты түрде ашылады.</li>
+        <li>Тест кезінде қойындыны жаппаңыз және басқа терезеге ауыспаңыз — бұл жағдайда қорытынды баға 1 балға төмендетіледі.</li>
+      </ul>
+
+      <div class="btnrow">
+        <button class="btn" id="startBtn" disabled>Келесі</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Сұрақ беті ===== -->
+  <section id="quizScreen" class="hidden">
+    <div class="qhead ui">
+      <span class="qnum" id="qnum">Сұрақ 1 / 10</span>
+      <span class="timer" id="timer">Қалған уақыт: <b id="tleft">02:30</b></span>
+    </div>
+    <div class="bar"><i id="prog"></i></div>
+    <p class="qtext" id="qtext"></p>
+    <div id="qbody"></div>
+    <div class="btnrow ui">
+      <button class="btn" id="nextBtn" disabled>Келесі</button>
+    </div>
+  </section>
+
+  <!-- ===== Нәтиже беті ===== -->
+  <section id="resultScreen" class="hidden">
+    <p class="sub ui">Тест аяқталды</p>
+    <h2 id="resName"></h2>
+    <div class="result-score" id="resScore"></div>
+    <p class="sub">балл (мүмкін 10 балдан)</p>
+    <table class="res ui" id="resTable"></table>
+    <p class="status ui wait" id="sendStatus">Нәтиже жіберілуде…</p>
+  </section>
+
+  <p class="foot ui">Алгебра · 8-сынып · Виет теоремасы</p>
+</main>
+
+<!-- Ескерту терезесі -->
+<div class="overlay" id="warnOverlay">
+  <div class="modal ui">
+    <h3>Ескерту!</h3>
+    <p>Сіз тест қойындысынан шықтыңыз. Шығу саны: <b id="warnCount">1</b>.</p>
+    <p>Қойындыны жапқан немесе басқа терезеге ауысқан жағдайда қорытынды баға <b>1 балға төмендетіледі</b>. Бұл туралы мұғалімге хабар жіберіледі.</p>
+    <p>Тест жалғасады — қайта шықпаңыз.</p>
+    <div class="btnrow"><button class="btn" id="warnOk">Тестті жалғастыру</button></div>
+  </div>
+</div>
+
+<script>
+/* ================== БАПТАУ ================== */
+// Apps Script веб-қосымшасының сілтемесін осы жерге қойыңыз:
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyKBaFSen-jXhlgu44a7BuT_Xp68yu27gMKaUkgvFJPE9elOWCNqFecklj7V5EBCU_oiQ/exec";
+const TIME_PER_Q = 150; // секунд (2,5 минут)
+const MAX_SCORE = 10;
+const TOPIC = "Теңдеулердің түбірлерін табу. Виет теоремасы (8.2.2.4)";
+
+/* ================== СҰРАҚТАР ================== */
+// type: "choice" — бір дұрыс жауап (correct — options ішіндегі индекс)
+// type: "input"  — сандық жауап
+const M = s => `<span class="m">${s}</span>`;
+
+const BANK = {
+  1: [
+    { type:"choice", text:`${M("x² − 7x + 10 = 0")} теңдеуінің түбірлерінің қосындысын табыңыз.`,
+      options:["7","−7","10","−10"], correct:0 },
+    { type:"choice", text:`${M("x² + 5x − 14 = 0")} теңдеуінің түбірлерінің көбейтіндісін табыңыз.`,
+      options:["−14","14","5","−5"], correct:0 },
+    { type:"choice", text:`Түбірлері ${M("2")} және ${M("5")} болатын келтірілген квадрат теңдеуді көрсетіңіз.`,
+      options:[M("x² − 7x + 10 = 0"),M("x² + 7x + 10 = 0"),M("x² − 7x − 10 = 0"),M("x² + 3x − 10 = 0")], correct:0 },
+    { type:"choice", text:`Виет теоремасына кері теореманы қолданып, ${M("x² − 9x + 20 = 0")} теңдеуінің түбірлерін табыңыз.`,
+      options:["4 және 5","−4 және −5","2 және 10","−2 және 10"], correct:0 },
+    { type:"choice", text:`${M("x² + px − 12 = 0")} теңдеуінің бір түбірі ${M("3")}-ке тең. Екінші түбірін және ${M("p")} коэффициентін табыңыз.`,
+      options:[`${M("x₂ = −4")}; ${M("p = 1")}`,`${M("x₂ = 4")}; ${M("p = −7")}`,`${M("x₂ = −4")}; ${M("p = −1")}`,`${M("x₂ = −9")}; ${M("p = 6")}`], correct:0 },
+    { type:"choice", text:`${M("2x² − 6x + 3 = 0")} теңдеуінің түбірлерінің қосындысы мен көбейтіндісін табыңыз.`,
+      options:[`${M("x₁ + x₂ = 3")}; ${M("x₁ · x₂ = 1,5")}`,`${M("x₁ + x₂ = −3")}; ${M("x₁ · x₂ = 1,5")}`,`${M("x₁ + x₂ = 6")}; ${M("x₁ · x₂ = 3")}`,`${M("x₁ + x₂ = 3")}; ${M("x₁ · x₂ = 3")}`], correct:0 },
+    { type:"choice", text:`${M("x₁")} және ${M("x₂")} — ${M("x² − 6x + 8 = 0")} теңдеуінің түбірлері. Теңдеуді шешпей, ${M("x₁² + x₂²")} мәнін табыңыз.`,
+      options:["20","36","52","28"], correct:0 },
+    { type:"choice", text:`${M("x² + 8x + 15 = 0")} теңдеуінің түбірлері туралы қай тұжырым дұрыс?`,
+      options:["Екі түбірі де теріс","Екі түбірі де оң","Түбірлерінің таңбалары әртүрлі","Теңдеудің түбірлері жоқ"], correct:0 },
+    { type:"input", text:`${M("x² − 11x + q = 0")} теңдеуінің бір түбірі ${M("4")}-ке тең. ${M("q")} коэффициентін табыңыз.`,
+      answer:28 },
+    { type:"input", text:`${M("x₁")} және ${M("x₂")} — ${M("x² + 3x − 10 = 0")} теңдеуінің түбірлері. Теңдеуді шешпей, ${M("1/x₁ + 1/x₂")} мәнін табыңыз.`,
+      answer:0.3 }
+  ],
+  2: [
+    { type:"choice", text:`${M("x² − 9x + 14 = 0")} теңдеуінің түбірлерінің қосындысын табыңыз.`,
+      options:["9","−9","14","−14"], correct:0 },
+    { type:"choice", text:`${M("x² + 4x − 21 = 0")} теңдеуінің түбірлерінің көбейтіндісін табыңыз.`,
+      options:["−21","21","4","−4"], correct:0 },
+    { type:"choice", text:`Түбірлері ${M("3")} және ${M("−4")} болатын келтірілген квадрат теңдеуді көрсетіңіз.`,
+      options:[M("x² + x − 12 = 0"),M("x² − x − 12 = 0"),M("x² + x + 12 = 0"),M("x² − 7x + 12 = 0")], correct:0 },
+    { type:"choice", text:`Виет теоремасына кері теореманы қолданып, ${M("x² − 8x + 15 = 0")} теңдеуінің түбірлерін табыңыз.`,
+      options:["3 және 5","−3 және −5","1 және 15","3 және −5"], correct:0 },
+    { type:"choice", text:`${M("x² + px − 15 = 0")} теңдеуінің бір түбірі ${M("5")}-ке тең. Екінші түбірін және ${M("p")} коэффициентін табыңыз.`,
+      options:[`${M("x₂ = −3")}; ${M("p = −2")}`,`${M("x₂ = 3")}; ${M("p = −8")}`,`${M("x₂ = −3")}; ${M("p = 2")}`,`${M("x₂ = −10")}; ${M("p = 5")}`], correct:0 },
+    { type:"choice", text:`${M("3x² − 12x + 6 = 0")} теңдеуінің түбірлерінің қосындысы мен көбейтіндісін табыңыз.`,
+      options:[`${M("x₁ + x₂ = 4")}; ${M("x₁ · x₂ = 2")}`,`${M("x₁ + x₂ = −4")}; ${M("x₁ · x₂ = 2")}`,`${M("x₁ + x₂ = 12")}; ${M("x₁ · x₂ = 6")}`,`${M("x₁ + x₂ = 4")}; ${M("x₁ · x₂ = 6")}`], correct:0 },
+    { type:"choice", text:`${M("x₁")} және ${M("x₂")} — ${M("x² − 5x + 6 = 0")} теңдеуінің түбірлері. Теңдеуді шешпей, ${M("x₁² + x₂²")} мәнін табыңыз.`,
+      options:["13","25","37","19"], correct:0 },
+    { type:"choice", text:`${M("x² − 2x − 15 = 0")} теңдеуінің түбірлері туралы қай тұжырым дұрыс?`,
+      options:["Түбірлерінің таңбалары әртүрлі","Екі түбірі де оң","Екі түбірі де теріс","Теңдеудің түбірлері жоқ"], correct:0 },
+    { type:"input", text:`${M("x² + px + 18 = 0")} теңдеуінің бір түбірі ${M("3")}-ке тең. ${M("p")} коэффициентін табыңыз.`,
+      answer:-9 },
+    { type:"input", text:`${M("x₁")} және ${M("x₂")} — ${M("x² + 2x − 8 = 0")} теңдеуінің түбірлері. Теңдеуді шешпей, ${M("1/x₁ + 1/x₂")} мәнін табыңыз.`,
+      answer:0.25 }
+  ]
+};
+
+/* ================== КҮЙ ================== */
+const $ = id => document.getElementById(id);
+const S = {
+  fio:"", klass:"", variant:"", qs:[], idx:0, answers:[], correctFlags:[],
+  blurCount:0, started:false, finished:false, startTime:0,
+  qDeadline:0, tick:null, lastHiddenAt:0
+};
+const LETTERS = ["A","B","C","D"];
+
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+/* ================== БАСТАУ БЕТІ ================== */
+function validateStart(){
+  const fio = $("fio").value.trim();
+  const klass = $("klass").value;
+  const v = document.querySelector('input[name=variant]:checked');
+  document.querySelectorAll('.variants label').forEach(l => l.classList.toggle('on', l.querySelector('input').checked));
+  $("startBtn").disabled = !(fio.length >= 3 && klass && v);
+}
+$("fio").addEventListener("input", validateStart);
+$("klass").addEventListener("change", validateStart);
+document.querySelectorAll('input[name=variant]').forEach(r => r.addEventListener("change", validateStart));
+
+$("startBtn").addEventListener("click", () => {
+  S.fio = $("fio").value.trim().replace(/\s+/g," ");
+  S.klass = $("klass").value;
+  S.variant = document.querySelector('input[name=variant]:checked').value;
+  S.qs = BANK[S.variant].map(q => {
+    if(q.type !== "choice") return q;
+    const opts = shuffle(q.options.map((t,i) => ({t, ok:i===q.correct})));
+    return {...q, shuffled:opts};
+  });
+  S.answers = new Array(10).fill(null);
+  S.correctFlags = new Array(10).fill(false);
+  S.started = true; S.startTime = Date.now();
+  $("startScreen").classList.add("hidden");
+  $("quizScreen").classList.remove("hidden");
+  showQuestion(0);
+});
+
+/* ================== СҰРАҚТАР ================== */
+function showQuestion(i){
+  S.idx = i;
+  const q = S.qs[i];
+  $("qnum").textContent = `Сұрақ ${i+1} / ${S.qs.length}`;
+  $("prog").style.width = (i / S.qs.length * 100) + "%";
+  $("qtext").innerHTML = `${i+1}. ${q.text}`;
+  $("nextBtn").textContent = (i === S.qs.length-1) ? "Тестті аяқтау" : "Келесі";
+  $("nextBtn").disabled = true;
+  const body = $("qbody");
+
+  if(q.type === "choice"){
+    body.innerHTML = `<ul class="opts">${q.shuffled.map((o,k)=>`
+      <li><label><input type="radio" name="opt" value="${k}"><span class="lt ui">${LETTERS[k]})</span><span>${o.t}</span></label></li>`).join("")}</ul>`;
+    body.querySelectorAll('input[name=opt]').forEach(r => r.addEventListener("change", () => {
+      body.querySelectorAll('.opts label').forEach(l => l.classList.toggle('on', l.querySelector('input').checked));
+      $("nextBtn").disabled = false;
+    }));
+  } else {
+    body.innerHTML = `<div class="ui">
+      <label class="f" for="numAns">Жауабыңызды сан түрінде енгізіңіз</label>
+      <input type="text" id="numAns" class="numin" inputmode="decimal" autocomplete="off" placeholder="Мысалы: −5 немесе 0,5">
+      <div class="note">Бөлшек жауапты ондық бөлшек түрінде жазыңыз (үтір немесе нүкте арқылы).</div></div>`;
+    const inp = $("numAns");
+    inp.addEventListener("input", () => { $("nextBtn").disabled = parseNum(inp.value) === null; });
+    inp.addEventListener("keydown", e => { if(e.key==="Enter" && !$("nextBtn").disabled) nextQuestion(); });
+    setTimeout(()=>inp.focus(), 50);
+  }
+  startTimer();
+}
+
+function parseNum(s){
+  if(s == null) return null;
+  let t = String(s).trim().replace(/\s/g,"").replace(/[−–—]/g,"-").replace(",",".");
+  if(!/^-?\d+(\.\d+)?$/.test(t) && !/^-?\d+\/\d+$/.test(t)) return null;
+  if(t.includes("/")){ const [a,b] = t.split("/").map(Number); return b===0 ? null : a/b; }
+  return Number(t);
+}
+
+function recordAnswer(){
+  const q = S.qs[S.idx];
+  if(q.type === "choice"){
+    const r = document.querySelector('input[name=opt]:checked');
+    if(r){
+      const o = q.shuffled[Number(r.value)];
+      S.answers[S.idx] = o.t.replace(/<[^>]+>/g,"");
+      S.correctFlags[S.idx] = o.ok;
+    } else { S.answers[S.idx] = "—"; }
+  } else {
+    const raw = $("numAns") ? $("numAns").value.trim() : "";
+    const v = parseNum(raw);
+    S.answers[S.idx] = raw || "—";
+    S.correctFlags[S.idx] = (v !== null && Math.abs(v - q.answer) < 1e-6);
+  }
+}
+
+function nextQuestion(){
+  stopTimer();
+  recordAnswer();
+  if(S.idx < S.qs.length - 1) showQuestion(S.idx + 1);
+  else finishTest();
+}
+$("nextBtn").addEventListener("click", nextQuestion);
+
+/* ================== ТАЙМЕР ================== */
+function startTimer(){
+  stopTimer();
+  S.qDeadline = Date.now() + TIME_PER_Q*1000;
+  updateTimer();
+  S.tick = setInterval(updateTimer, 250);
+}
+function stopTimer(){ if(S.tick){ clearInterval(S.tick); S.tick = null; } }
+function updateTimer(){
+  const left = Math.max(0, Math.ceil((S.qDeadline - Date.now())/1000));
+  const mm = String(Math.floor(left/60)).padStart(2,"0"), ss = String(left%60).padStart(2,"0");
+  $("tleft").textContent = `${mm}:${ss}`;
+  $("timer").classList.toggle("low", left <= 20);
+  if(left <= 0){ nextQuestion(); }
+}
+
+/* ================== ҚОЙЫНДЫНЫ БАҚЫЛАУ ================== */
+function onLeave(){
+  if(!S.started || S.finished) return;
+  const now = Date.now();
+  if(now - S.lastHiddenAt < 800) return; // blur + visibilitychange қайталанбауы үшін
+  S.lastHiddenAt = now;
+  S.blurCount++;
+}
+function onReturn(){
+  if(!S.started || S.finished || S.blurCount === 0) return;
+  $("warnCount").textContent = S.blurCount;
+  $("warnOverlay").classList.add("show");
+}
+document.addEventListener("visibilitychange", () => {
+  if(document.hidden) onLeave(); else onReturn();
+});
+window.addEventListener("blur", onLeave);
+window.addEventListener("focus", onReturn);
+$("warnOk").addEventListener("click", () => $("warnOverlay").classList.remove("show"));
+
+/* ================== АЯҚТАУ ================== */
+function finishTest(){
+  S.finished = true;
+  stopTimer();
+  $("warnOverlay").classList.remove("show");
+  const raw = S.correctFlags.filter(Boolean).length;
+  const penalty = S.blurCount > 0 ? 1 : 0;
+  const finalScore = Math.max(0, raw - penalty);
+  const durSec = Math.round((Date.now() - S.startTime)/1000);
+  const dur = `${Math.floor(durSec/60)} мин ${durSec%60} с`;
+
+  $("quizScreen").classList.add("hidden");
+  $("resultScreen").classList.remove("hidden");
+  $("resName").textContent = `${S.fio}, ${S.klass}, ${S.variant}-нұсқа`;
+  $("resScore").textContent = `${finalScore} / ${MAX_SCORE}`;
+  $("resTable").innerHTML = `
+    <tr><td>Дұрыс жауаптар саны</td><td>${raw} / ${MAX_SCORE}</td></tr>
+    <tr><td>Қойындыдан шығу саны</td><td>${S.blurCount}</td></tr>
+    <tr><td>Айып балл</td><td>${penalty ? "−1" : "0"}</td></tr>
+    <tr><td>Тестке жұмсалған уақыт</td><td>${dur}</td></tr>`;
+
+  const detail = S.qs.map((q,i) => `${i+1}) ${S.answers[i]} — ${S.correctFlags[i] ? "дұрыс" : "қате"}`).join("; ");
+  const payload = {
+    fio:S.fio, klass:S.klass, variant:S.variant, topic:TOPIC,
+    raw, penalty, score:finalScore, max:MAX_SCORE,
+    blurred: S.blurCount > 0 ? "Иә" : "Жоқ", blurCount:S.blurCount,
+    duration:dur, detail
+  };
+  sendResult(payload);
+}
+
+function sendResult(payload){
+  const st = $("sendStatus");
+  if(!SCRIPT_URL || SCRIPT_URL.indexOf("http") !== 0){
+    st.className = "status ui err";
+    st.textContent = "Нәтиже жіберілмеді: Google кестесінің сілтемесі (SCRIPT_URL) көрсетілмеген. Мұғалімге хабарлаңыз.";
+    return;
+  }
+  fetch(SCRIPT_URL, {
+    method:"POST", mode:"no-cors",
+    headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body: JSON.stringify(payload)
+  }).then(() => {
+    st.className = "status ui ok";
+    st.textContent = "Нәтиже мұғалімге жіберілді. Бетті жабуға болады.";
+  }).catch(() => {
+    st.className = "status ui err";
+    st.textContent = "Нәтижені жіберу мүмкін болмады. Интернет байланысын тексеріп, мұғалімге хабарлаңыз.";
+  });
+}
+
+window.addEventListener("beforeunload", e => {
+  if(S.started && !S.finished){ e.preventDefault(); e.returnValue = ""; }
+});
+</script>
+</body>
+</html>
